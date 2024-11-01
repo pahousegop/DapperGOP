@@ -3,6 +3,8 @@
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0;net7.0</TargetFrameworks>
     <PackageId>GOPDapper</PackageId>
     <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc. Major Sponsor: Dapper Plus from ZZZ Projects.</Description>
