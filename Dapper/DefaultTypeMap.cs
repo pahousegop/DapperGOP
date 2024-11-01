@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 
@@ -133,7 +134,7 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap GetConstructorParameter(ConstructorInfo constructor, string columnName)
         {
-            var param = MatchFirstOrDefault(constructor.GetParameters(), columnName, static p => p.Name) ?? Throw(columnName);
+            var param = MatchFirstOrDefault(constructor.GetParameters(), columnName, false, static p => p.Name, static p => p) ?? Throw(columnName);
             return new SimpleMemberMap(columnName, param);
 
             static ParameterInfo Throw(string name) => throw new ArgumentException("Constructor parameter not found for " + name);
@@ -146,7 +147,7 @@ namespace Dapper
         /// <returns>Mapping implementation</returns>
         public SqlMapper.IMemberMap? GetMember(string columnName)
         {
-            var property = MatchFirstOrDefault(Properties, columnName, static p => p.Name);
+            var property = MatchFirstOrDefault(Properties, columnName, true, static p => p.Name, static p => p.GetCustomAttribute(typeof(System.ComponentModel.DataAnnotations.Schema.ColumnAttribute)));
 
             if (property is not null)
                 return new SimpleMemberMap(columnName, property);
@@ -182,10 +183,10 @@ namespace Dapper
         /// </summary>
         public static bool MatchNamesWithUnderscores { get; set; }
 
-        static T? MatchFirstOrDefault<T>(IList<T>? members, string? name, Func<T, string?> selector) where T : class
+        static T? MatchFirstOrDefault<T>(IList<T>? members, string? name, bool checkCustomAttributes, Func<T, string?> selector, Func<T, object?> cust) where T : class
         {
             if (members is { Count: > 0 })
-            {
+            {             
                 // try exact first
                 foreach (var member in members)
                 {
@@ -198,6 +199,11 @@ namespace Dapper
                 foreach (var member in members)
                 {
                     if (string.Equals(name, selector(member), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return member;
+                    }
+
+                    if (checkCustomAttributes && string.Equals(name,((ColumnAttribute)cust(member))?.Name, StringComparison.Ordinal))
                     {
                         return member;
                     }
