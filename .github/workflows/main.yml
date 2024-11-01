@@ -1,53 +1,45 @@
-name: Main Build
+name: .NET Core Build and Publish
 
-on:
-  pull_request:
+on: 
   push:
-    branches:
-    - main
-    paths:
-    - '*'
-    - '!/docs/*' # Don't run workflow when files are only in the /docs directory
-
+    branches: [ main ]
+  workflow_dispatch:
+   
+env:
+  AZURE_WEBAPP_PACKAGE_PATH: './published'
+  NuGetDirectory: './NuGet'                     
+  NETCORE_VERSION: '8.0'                    # set this to the .NET Core version to use
+  
 jobs:
-  vm-job:
-    name: Ubuntu
+  build:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres
-        ports:
-        - 5432/tcp
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-      sqlserver:
-        image: mcr.microsoft.com/mssql/server:2019-latest
-        ports:
-        - 1433/tcp
-        env:
-          ACCEPT_EULA: Y
-          SA_PASSWORD: "Password."
-      mysql:
-        image: mysql
-        ports:
-        - 3306/tcp
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
-    - name: .NET Build
-      run: dotnet build Build.csproj -c Release /p:CI=true
-    - name: Dapper Tests
-      run: dotnet test tests/Dapper.Tests/Dapper.Tests.csproj -c Release --logger GitHubActions /p:CI=true
-      env:
-        MySqlConnectionString: Server=localhost;Port=${{ job.services.mysql.ports[3306] }};Uid=root;Pwd=root;Database=test;Allow User Variables=true
-        OLEDBConnectionString: Provider=SQLOLEDB;Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
-        PostgesConnectionString: Server=localhost;Port=${{ job.services.postgres.ports[5432] }};Database=test;User Id=postgres;Password=postgres;
-        SqlServerConnectionString: Server=tcp:localhost,${{ job.services.sqlserver.ports[1433] }};Database=tempdb;User Id=sa;Password=Password.;
-    - name: .NET Lib Pack
-      run: dotnet pack Build.csproj --no-build -c Release /p:PackageOutputPath=%CD%\.nupkgs /p:CI=true
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+         versionSpec: '5.x'
+
+    - name: Verify GitVersion installation   
+      run: dotnet-gitversion
+      
+    - name: Determine Version
+      id: version_step # step id used as reference for output values
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      
+    - name: Setup .NET Core with Version ${{ env.NETCORE_VERSION }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.NETCORE_VERSION }}
+        
+    - name: Pack nuget package
+      run: dotnet pack -c Release --output nupkgs /p:Version=1.0.${{env.GitVersion_buildMetaData}}
+      working-directory: ./Dapper
+    - name: Publish nuget package
+      run: dotnet nuget push nupkgs/*.nupkg -k ${{ secrets.NUGET_API_KEY }} -s https://nuget.pkg.github.com/pahousegop/index.json  --skip-duplicate
+      working-directory: ./Dapper
+    
