@@ -9,6 +9,7 @@
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="14.0.1016.290" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.6.143" />
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" />
+    <PackageVersion Include="System.ComponentModel.Annotations" Version="5.0.0" />
     <PackageVersion Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     <!-- tests -->
     <PackageVersion Include="Azure.Identity" Version="1.12.1" />
