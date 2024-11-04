@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Dapper</AssemblyName>
-    <Title>Dapper</Title>
-    <PackageTags>orm;sql;micro-orm</PackageTags>
-    <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc. Major Sponsor: Dapper Plus from ZZZ Projects.</Description>
-    <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0;net7.0</TargetFrameworks>
+    <PackageId>GOPDapper</PackageId>
+    <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Description>A high performance Micro-ORM supporting SQL Server, MySQL, Sqlite, SqlCE, Firebird etc. Major Sponsor: Dapper Plus from ZZZ Projects.</Description>
+    <Authors>Sam Saffron;Marc Gravell;Nick Craver</Authors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
