@@ -48,7 +48,6 @@
     <DefineConstants>$(DefineConstants);NET4X</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <PackageReference Include="Microsoft.SqlServer.Types" />
     <PackageReference Include="SubSonic" />
     <PackageReference Include="Susanoo.SqlServer" />

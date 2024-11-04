@@ -14,8 +14,6 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="../../Dapper.ProviderTools/Dapper.ProviderTools.csproj" />
-    <ProjectReference Include="../../Dapper.SqlBuilder/Dapper.SqlBuilder.csproj" />
     <PackageReference Include="DuckDB.NET.Data.Full" />
     <PackageReference Include="FastMember" />
     <PackageReference Include="FirebirdSql.Data.FirebirdClient" />
@@ -32,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net472'">
-    <ProjectReference Include="../../Dapper.EntityFramework/Dapper.EntityFramework.csproj" />
     <Reference Include="System.Data.Linq" />
   </ItemGroup>
   <ItemGroup>

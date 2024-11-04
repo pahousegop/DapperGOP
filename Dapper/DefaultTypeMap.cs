@@ -196,6 +196,11 @@ namespace Dapper
                     {
                         return member;
                     }
+
+                    if (checkCustomAttributes && string.Equals(name, ((ColumnAttribute)cust(member))?.Name, StringComparison.Ordinal))
+                    {
+                        return member;
+                    }
                 }
                 // then exact ignoring case
                 foreach (var member in members)
@@ -205,10 +210,6 @@ namespace Dapper
                         return member;
                     }
 
-                    if (checkCustomAttributes && string.Equals(name,((ColumnAttribute)cust(member))?.Name, StringComparison.Ordinal))
-                    {
-                        return member;
-                    }
                 }
                 if (MatchNamesWithUnderscores)
                 {
