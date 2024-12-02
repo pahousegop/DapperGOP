@@ -432,7 +432,13 @@ namespace Dapper
             /// <summary>
             /// The underlying reader
             /// </summary>
-            public DbDataReader ReadableReader => reader;
+            public int VisibleCount
+            {
+                get
+                {
+                    return reader.VisibleFieldCount;
+                }
+            }
 
             /// <summary>
             /// The cancellation token associated with this reader
