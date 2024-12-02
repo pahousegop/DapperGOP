@@ -427,7 +427,12 @@ namespace Dapper
             /// <summary>
             /// The underlying reader
             /// </summary>
-            public DbDataReader Reader => reader;
+            protected DbDataReader Reader => reader;
+
+            /// <summary>
+            /// The underlying reader
+            /// </summary>
+            public DbDataReader ReadableReader => reader;
 
             /// <summary>
             /// The cancellation token associated with this reader
