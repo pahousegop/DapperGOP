@@ -1,2 +1,1 @@
 ﻿#nullable enable
-Dapper.SqlMapper.GridReader.VisibleCount.get -> int
