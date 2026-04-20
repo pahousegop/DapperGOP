@@ -1,24 +1,30 @@
 ﻿@page "/"
 @using DTO
 @using System.Data
-@using System.Data.SqlClient
+@using Microsoft.Data.SqlClient
 @using Dapper
 something here
 
 @code {
-    
+
 
     protected async override  Task OnInitializedAsync()
     {
 
 
-        using (IDbConnection connection = new SqlConnection("Data Source=sqldev2;Initial Catalog=RepnetBlazor_Bob;User ID=UserRepnet;Password=qs%w3Rpj3jvmrC"))
-
+        using (IDbConnection connection = new SqlConnection("Server=sqldev2;Database=PeopleDB;Integrated Security=True;Column Encryption Setting=Enabled;TrustServerCertificate=True"))
         {
+            var p = connection.QuerySingleOrDefault<People>("SELECT  Id, FirstName, LastName, DateOfBirth, EmailAddress FROM People where Id = 1", null);
+            p.LastName = "smith";
+            try
+            {
+                var data = await connection.ExecuteAsync("update People set [FirstName] = @FirstName, [LastName] = @LastName, [DateOfBirth] = @DateOfBirth, [EmailAddress] = @EmailAddress where [Id] = @Id", p);
 
-            string sql = "SELECT top 1 * FROM BillType WHERE Dataset = '106' AND DeleteDate IS NULL";
-
-            var data = await connection.QuerySingleOrDefaultAsync<BillType>(sql);
+            }
+            catch(Exception ex)
+            {
+                var s = ex.Message;
+            }
 
            
         }
@@ -28,6 +34,18 @@ something here
     }
 
 
+    class People
+    {
+
+        public int Id { get; set; }
+        [EncryptedMetadata(DbType.AnsiString, 50)]
+        public string FirstName { get; set; } = string.Empty;
+        [EncryptedMetadata(DbType.AnsiString, 50)]
+        public string LastName { get; set; } = string.Empty;
+        public DateTime? DateOfBirth { get; set; }
+        public string EmailAddress { get; set; } = string.Empty;
+
+    }
 
     
 }
