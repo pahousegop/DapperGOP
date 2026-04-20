@@ -25,7 +25,7 @@ using System.Xml.Linq;
 namespace Dapper
 {
     /// <summary>
-    /// Dapper, a light weight object mapper for ADO.NET, This is our fork
+    /// Dapper, a light weight object mapper for ADO.NET
     /// </summary>
     public static partial class SqlMapper
     {
@@ -2683,7 +2683,6 @@ namespace Dapper
                 }
 #pragma warning disable 618
 
-                // 1. First, let Dapper do its normal lookup
                 DbType? dbType = LookupDbType(prop.PropertyType, prop.Name, true, out ITypeHandler? handler);
                
                 int? encryptedSize = null;
@@ -2745,14 +2744,6 @@ namespace Dapper
                         // constant value; nice and simple
                         EmitInt32(il, (int)dbType.GetValueOrDefault());// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
                         il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.DbType))!.GetSetMethod()!, null);// stack is now [parameters] [[parameters]] [parameter]
-
-                        // 2. Use the encryptedSize we captured at the top of the loop
-                        if (encryptedSize.HasValue)
-                        {
-                            il.Emit(OpCodes.Dup); // Keep the parameter on the stack for the next call
-                            EmitInt32(il, encryptedSize.Value); // Push the hardcoded size (e.g., 11 or 50)
-                            il.EmitCall(OpCodes.Callvirt, typeof(IDbDataParameter).GetProperty(nameof(IDbDataParameter.Size))!.GetSetMethod()!, null);
-                        }
                     }
                 }
 
@@ -2830,19 +2821,33 @@ namespace Dapper
                     il.MarkLabel(notNull);
                     if (prop.PropertyType == typeof(string))
                     {
-                        il.Emit(OpCodes.Dup); // [string] [string]
-                        il.EmitCall(OpCodes.Callvirt, typeof(string).GetProperty(nameof(string.Length))!.GetGetMethod()!, null); // [string] [length]
-                        EmitInt32(il, DbString.DefaultLength); // [string] [length] [4000]
-                        il.Emit(OpCodes.Cgt); // [string] [0 or 1]
-                        Label isLong = il.DefineLabel(), lenDone = il.DefineLabel();
-                        il.Emit(OpCodes.Brtrue_S, isLong);
-                        EmitInt32(il, DbString.DefaultLength); // [string] [4000]
-                        il.Emit(OpCodes.Br_S, lenDone);
-                        il.MarkLabel(isLong);
-                        EmitInt32(il, -1); // [string] [-1]
-                        il.MarkLabel(lenDone);
-                        il.Emit(OpCodes.Stloc, GetSizeLocal()); // [string]
+                        // --- START OF MODIFICATION ---
+                        if (encryptedSize.HasValue)
+                        {
+                            // If we have an encrypted size, ignore Dapper's 4000/MAX logic 
+                            // and just store our specific size in the 'Size' local variable.
+                            EmitInt32(il, encryptedSize.Value);
+                            il.Emit(OpCodes.Stloc, GetSizeLocal());
+                        }
+                        else
+                        {
+                            // --- ORIGINAL DAPPER LOGIC ---
+                            il.Emit(OpCodes.Dup);
+                            il.EmitCall(OpCodes.Callvirt, typeof(string).GetProperty(nameof(string.Length))!.GetGetMethod()!, null);
+                            EmitInt32(il, DbString.DefaultLength);
+                            il.Emit(OpCodes.Cgt);
+                            Label isLong = il.DefineLabel(), lenDone = il.DefineLabel();
+                            il.Emit(OpCodes.Brtrue_S, isLong);
+                            EmitInt32(il, DbString.DefaultLength);
+                            il.Emit(OpCodes.Br_S, lenDone);
+                            il.MarkLabel(isLong);
+                            EmitInt32(il, -1);
+                            il.MarkLabel(lenDone);
+                            il.Emit(OpCodes.Stloc, GetSizeLocal());
+                        }
+                        // --- END OF MODIFICATION ---
                     }
+
                     if (prop.PropertyType.FullName == LinqBinary)
                     {
                         il.EmitCall(OpCodes.Callvirt, prop.PropertyType.GetMethod("ToArray", BindingFlags.Public | BindingFlags.Instance)!, null);
