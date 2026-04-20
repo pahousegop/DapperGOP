@@ -25,7 +25,7 @@ using System.Xml.Linq;
 namespace Dapper
 {
     /// <summary>
-    /// Dapper, a light weight object mapper for ADO.NET
+    /// Dapper, a light weight object mapper for ADO.NET, This is our fork
     /// </summary>
     public static partial class SqlMapper
     {
@@ -2682,7 +2682,20 @@ namespace Dapper
                     continue;
                 }
 #pragma warning disable 618
+
+                // 1. First, let Dapper do its normal lookup
                 DbType? dbType = LookupDbType(prop.PropertyType, prop.Name, true, out ITypeHandler? handler);
+               
+                int? encryptedSize = null;
+
+                // 2. Check if our custom attribute exists on the property
+                var encryptedAttr = prop.GetCustomAttribute<EncryptedMetadataAttribute>();
+                if (encryptedAttr != null)
+                {
+                    // OVERRIDE: Force the metadata required for Always Encrypted
+                    dbType = encryptedAttr.DataType;
+                    encryptedSize = encryptedAttr.Size;
+                }
 #pragma warning restore 618
                 if (dbType == DynamicParameters.EnumerableMultiParameter)
                 {
@@ -2732,6 +2745,14 @@ namespace Dapper
                         // constant value; nice and simple
                         EmitInt32(il, (int)dbType.GetValueOrDefault());// stack is now [parameters] [[parameters]] [parameter] [parameter] [db-type]
                         il.EmitCall(OpCodes.Callvirt, typeof(IDataParameter).GetProperty(nameof(IDataParameter.DbType))!.GetSetMethod()!, null);// stack is now [parameters] [[parameters]] [parameter]
+
+                        // 2. Use the encryptedSize we captured at the top of the loop
+                        if (encryptedSize.HasValue)
+                        {
+                            il.Emit(OpCodes.Dup); // Keep the parameter on the stack for the next call
+                            EmitInt32(il, encryptedSize.Value); // Push the hardcoded size (e.g., 11 or 50)
+                            il.EmitCall(OpCodes.Callvirt, typeof(IDbDataParameter).GetProperty(nameof(IDbDataParameter.Size))!.GetSetMethod()!, null);
+                        }
                     }
                 }
 
